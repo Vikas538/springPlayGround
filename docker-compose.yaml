@@ -1,0 +1,60 @@
+version: "3"
+services:
+  # demo:
+  #   container_name: demo
+  #   build:
+  #     context: .
+  #     dockerfile: ./Dockerfile
+  #     args:
+  #        - PROJECT_NAME=demo2
+  #        - VERSION=0.0.1
+  #   image: demo:0.0.1
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8000:8088"
+  #   depends_on:
+  #     - kafka
+  
+  # zookeeper:
+  #     image : zookeeper
+  #     container_name: zookeeper
+  #     ports:
+  #       - "2181:2181"
+  #     environment :
+  #       ZOOKEEPER_CLIENT_PORT: 2181
+  
+  # kafka: 
+  #    image: "confluentinc/cp-kafka"
+  #    container_name: kafka
+  #    ports:
+  #     - "9092:9092"
+  #    depends_on:
+  #     - zookeeper
+  #    environment:
+  #      KAFKA_ADVERTISED_HOST_NAME: kafka
+  #      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+  #      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # kafka-ui:
+  #   image: provectuslabs/kafka-ui:latest
+  #   depends_on:
+  #     - kafka
+  #   ports:
+  #     - 8090:8080
+  #   environment:
+  #     KAFKA_CLUSTERS_0_NAME: local
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+  #     KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+  postgres:
+      image: postgres:latest
+      container_name: "postgres"
+      ports:
+      - 5432:5432
+      environment: 
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: root
+        
+       
+      

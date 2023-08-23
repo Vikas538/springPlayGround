@@ -1,0 +1,46 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.1.2'
+	id 'io.spring.dependency-management' version '1.1.2'
+	id "com.palantir.docker" version "0.35.0"
+	id "com.palantir.docker-run" version "0.35.0"
+}
+
+group = 'com.example'
+version = '0.0.1'
+
+java {
+	sourceCompatibility = '20'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.kafka:spring-kafka'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+docker {
+    name "${project.name}:${project.version}"
+    files 'demo2-0.0.1.jar'
+    tag 'DockerHub', "tkgregory/gradle-docker-example:${project.version}"
+}
+
+ dockerRun {
+    name "${project.name}"
+    image "${project.name}:${project.version}"
+    ports '8084:8088'
+    clean true
+}
+
+task rebuild() {
+  dependsOn   clean
+  finalizedBy build
+}
