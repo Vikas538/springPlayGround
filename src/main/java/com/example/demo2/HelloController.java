@@ -51,7 +51,8 @@ public class HelloController {
 	@PostMapping(value="/createBook", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody String create(@RequestBody Book body) {
 		logger.info("User: {}", body);
-		Book book = new Book();
+		System.out.println(body.toString());
+		Book book = new Book(body.name,body.author);
 		book.setAuthor(book.author);
 		booksRepository.save(book);
 		//  booksRepository.fidnBookByName("test");

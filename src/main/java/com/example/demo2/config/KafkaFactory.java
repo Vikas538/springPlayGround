@@ -15,8 +15,12 @@ import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
@@ -31,7 +35,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import com.example.demo2.model.Book;
 
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,11 +44,12 @@ import javax.sql.DataSource;
 @EnableBatchProcessing
 public class KafkaFactory {
 
-    private DataSource dataSource;
-    
-      public  KafkaFactory(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
+    // private final DataSource dataSource;
+
+    // public KafkaFactory(DataSource dataSource) {
+    // this.dataSource = dataSource;
+
+    // }
 
     @Bean
     public ProducerFactory<String, ?> producerFactory() {
@@ -55,57 +59,61 @@ public class KafkaFactory {
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(configProps);
     }
+
     @Bean
     public KafkaTemplate<String, ?> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 
-    public FlatFileItemReader<Book> reader() {
+    // public FlatFileItemReader<Book> reader() {
 
-        FlatFileItemReader<Book> itemReader = new FlatFileItemReader<>();
-        itemReader.setResource(new FileSystemResource("/src/resources/books.csv"));
-        itemReader.setName("csvreader");
-        itemReader.setLinesToSkip(1);
-        itemReader.setLineMapper(lineMapper());
-        return itemReader;
-    }
-    
-    private LineMapper<Book> lineMapper() {
-        DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
-        delimitedLineTokenizer.setDelimiter(",");
-        delimitedLineTokenizer.setNames("name", "author");
-        DefaultLineMapper<Book> lineMapper = new DefaultLineMapper<>();
-        BeanWrapperFieldSetMapper<Book> fieldMapper = new BeanWrapperFieldSetMapper<>();
-        fieldMapper.setTargetType(Book.class);
-        lineMapper.setFieldSetMapper(fieldMapper);
-        lineMapper.setLineTokenizer(delimitedLineTokenizer);
-        return lineMapper;
-    }
+    //     FlatFileItemReader<Book> itemReader = new FlatFileItemReader<>();
+    //     itemReader.setResource(new FileSystemResource("/home/vikas/personal_work/demo2/src/main/resources/books.csv"));
+    //     itemReader.setName("csvreader");
+    //     itemReader.setLinesToSkip(1);
+    //     itemReader.setLineMapper( lineMapper());
+    //     return itemReader;
+    // }
 
-        @Bean
-    public NullItemWriter<Book> nullableWriter() {
-        return new NullItemWriter<>();
+    // private LineMapper<Book> lineMapper() {
+    //     DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
+    //     delimitedLineTokenizer.setDelimiter(",");
+    //     delimitedLineTokenizer.setNames("name", "author");
+    //     DefaultLineMapper<Book> lineMapper = new DefaultLineMapper<>();
+    //     BeanWrapperFieldSetMapper<Book> fieldMapper = new BeanWrapperFieldSetMapper<>();
+    //     fieldMapper.setTargetType(Book.class);
+    //     lineMapper.setFieldSetMapper(fieldMapper);
+    //     lineMapper.setLineTokenizer(delimitedLineTokenizer);
         
-    }
-    
-@Bean
-public Job importUserJob(JobRepository jobRepository,  Step step1) {
-    return new JobBuilder("importUserJob", jobRepository)
-      .incrementer(new RunIdIncrementer())
-      .flow(step1)
-      .end()
-      .build();
-}
 
-@Bean
-public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-    return new StepBuilder("step1", jobRepository)
-            .<Book, Book>chunk(10, transactionManager)
-            .reader(reader())
-            .writer(nullableWriter())
-            .taskExecutor(taskExecutor())
-            .build();
-}
+    //     return lineMapper;
+    // }
+
+    @Bean
+    public NullItemWriter<String> nullableWriter() {
+        return new NullItemWriter<>();
+
+    }
+
+    @Bean
+    public Job importUserJob(JobRepository jobRepository, Step step1) {
+        return new JobBuilder("importUserJob", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .flow(step1)
+                .end()
+                .build();
+    }
+
+    @Bean
+    public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("step1", jobRepository)
+                .<Book, String>chunk(10, transactionManager)
+                .reader(new BookCsvReader())
+                .processor(new BookToJsonProcessor())
+                .writer(nullableWriter())
+                .taskExecutor(taskExecutor())
+                .build();
+    }
 
     @Bean
     public TaskExecutor taskExecutor() {
@@ -114,9 +122,5 @@ public Step step1(JobRepository jobRepository, PlatformTransactionManager transa
         return asyncTaskExecutor;
     }
 
-      @Bean
-    public PlatformTransactionManager transactionManager() {
-        return new DataSourceTransactionManager(dataSource);
-    }
- 
+
 }
