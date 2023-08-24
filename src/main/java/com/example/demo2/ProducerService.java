@@ -1,6 +1,4 @@
 package com.example.demo2;
-
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +22,7 @@ public class ProducerService {
         Map<String, String> test1 = Map.of(
                 "a", "b",
                 "c", "d");
-        kafkaTemplate.send("testTopic", "hey", test1);
+        this.kafkaTemplate.send("testTopic", "hey", test1);
     }
 
 }
